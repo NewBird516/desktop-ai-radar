@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>AI 雷达</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <header id="titlebar">
+    <div class="brand">
+      <span class="glyph">
+        <svg viewBox="0 0 24 24" width="13" height="13">
+          <path d="M12 2a10 10 0 1 0 10 10h-4a6 6 0 1 1-6-6z"/>
+          <circle cx="12" cy="12" r="2.4"/>
+        </svg>
+      </span>
+      <span class="name">AI 雷达</span>
+    </div>
+    <div class="right">
+      <span id="stamp" class="stamp">加载中…</span>
+      <button id="btn-refresh" class="wbtn refresh" title="立即刷新">
+        <svg viewBox="0 0 24 24" width="11" height="11"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>
+      </button>
+      <button id="btn-min" class="wbtn min" title="最小化"><svg viewBox="0 0 24 24" width="11" height="11"><path d="M5 11h14v2H5z"/></svg></button>
+      <button id="btn-close" class="wbtn close" title="关闭"><svg viewBox="0 0 24 24" width="11" height="11"><path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"/></svg></button>
+    </div>
+  </header>
+
+  <main id="stack">
+
+    <section id="news-section" class="panel glass">
+      <svg class="sq" aria-hidden="true"><path class="sq-fill"/><path class="sq-edge"/></svg>
+      <div class="sec-head">
+        <h2>最新 AI 资讯</h2>
+        <span id="news-meta" class="meta">国内外</span>
+      </div>
+      <div id="news-list" class="list">
+        <div class="skeleton-wrap">
+          <div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="repo-section" class="panel glass">
+      <svg class="sq" aria-hidden="true"><path class="sq-fill"/><path class="sq-edge"/></svg>
+      <div class="sec-head">
+        <h2>GitHub 一周最火</h2>
+        <span id="repo-meta" class="meta">Top 10</span>
+      </div>
+      <div id="repo-list" class="list">
+        <div class="skeleton-wrap">
+          <div class="sk"></div><div class="sk"></div><div class="sk"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer id="statusbar">
+    <span id="status-text" class="s-main">准备就绪</span>
+    <span id="countdown" class="cd"></span>
+  </footer>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

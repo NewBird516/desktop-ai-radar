@@ -1,0 +1,25 @@
+{
+  "_comment": "AI 资讯源配置。可自由增删：name=显示名, url=RSS/Atom 地址, region=cn/en, ai_vertical=true 表示该源本身就是 AI 垂直源(全部保留), false 表示泛科技源(只保留命中 AI 关键词的条目)",
+  "translate_desc": true,
+  "translate_title": true,
+  "sources": [
+    { "name": "量子位", "url": "https://www.qbitai.com/feed", "region": "cn", "ai_vertical": false },
+    { "name": "极客公园", "url": "https://www.geekpark.net/rss", "region": "cn", "ai_vertical": false },
+    { "name": "InfoQ中国", "url": "https://www.infoq.cn/feed", "region": "cn", "ai_vertical": false },
+    { "name": "爱范儿", "url": "https://www.ifanr.com/feed", "region": "cn", "ai_vertical": false },
+    { "name": "OpenAI", "url": "https://openai.com/news/rss.xml", "region": "en", "ai_vertical": true },
+    { "name": "DeepMind", "url": "https://deepmind.google/blog/rss.xml", "region": "en", "ai_vertical": true },
+    { "name": "MIT Tech Review", "url": "https://www.technologyreview.com/topic/artificial-intelligence/feed", "region": "en", "ai_vertical": true },
+    { "name": "TechCrunch AI", "url": "https://techcrunch.com/category/artificial-intelligence/feed/", "region": "en", "ai_vertical": true },
+    { "name": "The Verge AI", "url": "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml", "region": "en", "ai_vertical": true },
+    { "name": "Simon Willison", "url": "https://simonwillison.net/atom/everything/", "region": "en", "ai_vertical": true },
+    { "name": "HackerNews AI", "url": "https://hnrss.org/newest?q=AI+OR+LLM+OR+GPT&points=50", "region": "en", "ai_vertical": true }
+  ],
+  "ai_keywords": [
+    "ai", "aigc", "agi", "gpt", "llm", "大模型", "模型", "机器学习", "深度学习", "神经网络",
+    "agent", "智能体", "openai", "claude", "gemini", "deepseek", "qwen", "通义", "文心", "混元",
+    "kimi", "豆包", "智谱", "glm", "llama", "anthropic", "copilot", "chatgpt", "transformer",
+    "diffusion", "扩散模型", "多模态", "推理", "训练", "微调", "rag", "prompt", "算力", "gpu",
+    "芯片", "英伟达", "nvidia", "机器人", "具身智能", "自动驾驶", "ocr", "asr", "tts", "llamaindex"
+  ]
+}

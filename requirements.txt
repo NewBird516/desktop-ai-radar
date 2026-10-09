@@ -1,0 +1,7 @@
+# Windows 桌面小组件依赖（Python 3.10+）
+# pythonnet 由 pywebview 在 Windows 上自动安装，无需单独列出
+pywebview>=6.2
+requests>=2.32
+feedparser>=6.0
+beautifulsoup4>=4.12
+python-dateutil>=2.8

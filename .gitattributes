@@ -1,0 +1,15 @@
+# 批处理脚本必须是 CRLF，否则部分 Windows 版本执行异常
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 其他文本文件统一 LF 入库
+*.py text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# 二进制资源
+*.png binary
+*.ico binary

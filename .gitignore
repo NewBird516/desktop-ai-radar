@@ -1,0 +1,29 @@
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# Python 字节码与打包产物
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+*.spec
+
+# 运行期产物：抓到的资讯/译文/正文缓存与日志（含个人信息，不入库）
+cache.json
+translation_cache.json
+article_cache.json
+widget.log
+*.log
+
+# WebView2 / pywebview 运行期数据
+.webview_data/
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

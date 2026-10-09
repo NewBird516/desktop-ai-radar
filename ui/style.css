@@ -1,0 +1,286 @@
+/* AI 雷达 — DeskGo 风格透明主题
+   窗口逐像素透明（app.py transparent=True），壁纸透过半透明深色面板直接可见：
+   不模糊、不加白底，仅靠一层低透明度的深色保证文字可读。 */
+
+:root {
+  --r-card: 18px;      /* 主卡圆角 */
+  --r-panel: 14px;     /* 内嵌面板圆角 */
+  --r-chip: 7px;
+
+  /* 面板底色：低透明度深色，壁纸从这里透出来（透明度和可读性靠文字阴影补偿） */
+  --shell: rgba(10, 12, 18, .36);
+  --shell-2: rgba(5, 7, 11, .46);
+  --panel: rgba(255, 255, 255, .05);
+  --panel-hover: rgba(255, 255, 255, .10);
+  --edge: rgba(255, 255, 255, .14);
+  --edge-soft: rgba(255, 255, 255, .08);
+  --hair: rgba(255, 255, 255, .09);
+
+  --ink: #FFFFFF;
+  --ink-2: #DFE4EC;
+  --ink-3: #B3B9C6;
+
+  --blue: #5FADFF;
+  --red: #FF6A5E;
+  --orange: #FFAB4D;
+  --gold: #FFC14D;
+  --green: #4FE09B;
+
+  --tshadow: 0 1px 3px rgba(0, 0, 0, .92), 0 0 6px rgba(0, 0, 0, .38);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  /* 窗口与网页都必须透明，壁纸才能透过面板显示 */
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display",
+               "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+}
+
+/* 拖动中：全窗 grabbing 光标并禁止选中 */
+body.dragging { cursor: grabbing !important; }
+body.dragging * { cursor: grabbing !important; -webkit-user-select: none !important; user-select: none !important; }
+
+#app {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 8px;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: linear-gradient(168deg, var(--shell), var(--shell-2));
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+
+/* ---------- 标题栏 ---------- */
+#titlebar {
+  position: relative; z-index: 2;
+  flex: 0 0 32px;
+  display: flex; align-items: center;
+  padding: 0 3px 0 4px;
+  -webkit-user-select: none; user-select: none;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand .glyph {
+  width: 21px; height: 21px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; fill: currentColor;
+  background: linear-gradient(150deg, #38A4FF, #0A63E0 70%, #0A4FC0);
+  box-shadow: 0 2px 8px rgba(10, 110, 230, .35), inset 0 1px 0 rgba(255, 255, 255, .4);
+}
+.brand .name {
+  font-size: 13px; font-weight: 600; letter-spacing: .4px;
+  color: var(--ink); text-shadow: var(--tshadow);
+}
+#titlebar .right { margin-left: auto; display: flex; align-items: center; gap: 7px; }
+.stamp {
+  font-size: 10.5px; color: var(--ink-3);
+  font-variant-numeric: tabular-nums; letter-spacing: .2px;
+  text-shadow: var(--tshadow);
+}
+
+/* 窗口按钮：半透明圆点，悬停浮出符号 */
+.wbtn {
+  width: 15px; height: 15px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%;
+  cursor: pointer;
+  color: transparent; fill: currentColor;
+  filter: saturate(.85) brightness(.96);
+  transition: transform .12s ease, filter .12s ease;
+}
+.wbtn svg { width: 0; height: 0; opacity: 0; transition: opacity .12s ease; pointer-events: none; }
+#titlebar:hover .wbtn svg { width: 8px; height: 8px; opacity: .6; }
+.wbtn:hover { transform: scale(1.16); filter: none; color: rgba(0, 0, 0, .6); }
+.wbtn:active { transform: scale(.94); }
+.wbtn.refresh { background: rgba(62, 196, 99, .85); }
+.wbtn.min     { background: rgba(255, 201, 60, .85); }
+.wbtn.close   { background: rgba(255, 106, 94, .85); }
+.wbtn.spin svg { animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- 内容区 ---------- */
+#stack {
+  position: relative; z-index: 2;
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.panel {
+  position: relative;
+  display: flex; flex-direction: column; min-height: 0;
+  border-radius: var(--r-panel);
+}
+#news-section { flex: 1 1 auto; }
+#repo-section { flex: 0 0 322px; }
+
+/* 内嵌面板：比主卡亮一丁点，形成层次但不挡壁纸 */
+.glass {
+  background: var(--panel);
+  box-shadow: inset 0 0 0 .5px var(--edge-soft);
+}
+
+/* 贝塞尔超椭圆轮廓层（app.js 生成路径） */
+.panel > .sq {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+}
+.panel > .sq .sq-fill { fill: rgba(255, 255, 255, .03); }
+.panel > .sq .sq-edge { fill: none; stroke: var(--edge-soft); stroke-width: 1; }
+
+.sec-head {
+  position: relative; z-index: 1;
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 13px 7px;
+}
+.sec-head h2 {
+  font-size: 12px; font-weight: 600; letter-spacing: .3px;
+  color: var(--ink); text-shadow: var(--tshadow);
+}
+.sec-head .meta {
+  font-size: 10.5px; color: var(--ink-3); margin-left: auto;
+  font-variant-numeric: tabular-nums; text-shadow: var(--tshadow);
+}
+
+.list {
+  position: relative; z-index: 1;
+  flex: 1 1 auto; overflow-y: auto;
+  padding: 0 8px 8px;
+  scrollbar-width: thin;
+}
+.list::-webkit-scrollbar { width: 7px; }
+.list::-webkit-scrollbar-track { background: transparent; }
+.list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .16);
+  border: 2px solid transparent; background-clip: content-box; border-radius: 4px;
+}
+.list::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .30); background-clip: content-box; }
+
+/* ---------- 资讯条目 ---------- */
+.news-item {
+  position: relative;
+  padding: 8px 10px 8px 12px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background .16s ease;
+}
+.news-item:hover { background: rgba(255, 255, 255, .08); }
+.news-item.open { background: rgba(255, 255, 255, .12); }
+.news-item::before {
+  content: ""; position: absolute; left: 4px; top: 13px; bottom: 13px;
+  width: 2.5px; border-radius: 2px; background: rgba(255, 255, 255, .28);
+}
+.news-item.cn::before { background: var(--red); }
+.news-item.en::before { background: var(--blue); }
+
+.news-top { display: flex; align-items: baseline; gap: 6px; }
+.chip {
+  flex: 0 0 auto; font-size: 10px; line-height: 15px; font-weight: 600;
+  padding: 0 5px; border-radius: var(--r-chip);
+  background: rgba(95, 173, 255, .24); color: #CFE4FF;
+  max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.news-item.cn .chip { background: rgba(255, 106, 94, .24); color: #FFD3CD; }
+.news-title {
+  font-size: 12.5px; font-weight: 550; line-height: 1.5; color: var(--ink);
+  text-shadow: var(--tshadow);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.news-time {
+  margin-left: auto; flex: 0 0 auto; font-size: 10.5px; color: var(--ink-3);
+  font-variant-numeric: tabular-nums; text-shadow: var(--tshadow);
+}
+
+.news-detail { display: none; padding: 8px 2px 3px; margin-top: 7px; border-top: .5px solid var(--hair); }
+.news-item.open .news-detail { display: block; }
+.news-detail p {
+  font-size: 11.5px; line-height: 1.75; color: var(--ink-2);
+  text-shadow: var(--tshadow);
+  white-space: pre-wrap; word-break: break-word;
+}
+.news-detail .empty, .news-detail .loading-article { color: var(--ink-3); }
+.news-detail .origin-title {
+  margin-bottom: 7px; padding: 6px 9px; border-radius: 8px;
+  background: rgba(0, 0, 0, .22); color: var(--ink-3); font-size: 10.5px; line-height: 1.6;
+}
+.detail-act { margin-top: 9px; display: flex; gap: 7px; }
+.link-btn {
+  border: none; background: rgba(77, 163, 255, .20); color: #9CCBFF;
+  font-size: 11px; padding: 4.5px 11px; border-radius: 8px; cursor: pointer;
+  transition: background .14s ease, color .14s ease;
+}
+.link-btn:hover { background: var(--blue); color: #0B1B30; }
+.link-btn.ghost { color: var(--ink-2); background: rgba(255, 255, 255, .10); }
+.link-btn.ghost:hover { background: rgba(255, 255, 255, .20); color: var(--ink); }
+
+/* ---------- 仓库条目 ---------- */
+.repo-item {
+  display: flex; gap: 9px; align-items: flex-start;
+  padding: 7px 9px; border-radius: 10px; cursor: pointer;
+  transition: background .16s ease;
+}
+.repo-item:hover { background: rgba(255, 255, 255, .08); }
+.repo-rank {
+  flex: 0 0 18px; height: 18px; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10.5px; font-weight: 650; border-radius: 5px;
+  background: rgba(255, 255, 255, .12); color: var(--ink-2); font-variant-numeric: tabular-nums;
+}
+.repo-item:nth-child(1) .repo-rank { background: var(--red); color: #fff; }
+.repo-item:nth-child(2) .repo-rank { background: var(--orange); color: #3A1E00; }
+.repo-item:nth-child(3) .repo-rank { background: var(--gold); color: #3A2A00; }
+.repo-body { min-width: 0; flex: 1; }
+.repo-line { display: flex; align-items: center; gap: 6px; }
+.repo-name {
+  font-size: 12.5px; font-weight: 650; color: #A9CDFF;
+  text-shadow: var(--tshadow);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px;
+}
+.repo-lang { font-size: 10.5px; color: var(--ink-3); }
+.repo-star {
+  margin-left: auto; font-size: 11px; font-weight: 600; color: var(--gold);
+  font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: var(--tshadow);
+}
+.repo-star .week { color: var(--green); margin-left: 4px; }
+.repo-desc {
+  font-size: 11.5px; line-height: 1.55; color: var(--ink-2); margin-top: 2px;
+  text-shadow: var(--tshadow);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ---------- 骨架屏 / 空态 ---------- */
+.skeleton-wrap { padding: 6px 2px 0; }
+.sk {
+  height: 30px; margin-bottom: 10px; border-radius: 9px;
+  background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.14), rgba(255,255,255,.05));
+  background-size: 220% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -60% 0; } }
+
+.empty-tip { padding: 30px 10px; text-align: center; color: var(--ink-3); font-size: 12px; line-height: 1.8; }
+.error-tip { padding: 24px 12px; text-align: center; color: #FF8A80; font-size: 12px; line-height: 1.8; }
+
+/* ---------- 状态栏 ---------- */
+#statusbar {
+  position: relative; z-index: 2;
+  flex: 0 0 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 6px; font-size: 10.5px; color: var(--ink-3);
+  text-shadow: var(--tshadow);
+}
+#statusbar .s-main { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#statusbar .cd { flex: 0 0 auto; margin-left: 10px; font-variant-numeric: tabular-nums; }
