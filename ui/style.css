@@ -155,6 +155,28 @@ body.dragging * { cursor: grabbing !important; -webkit-user-select: none !import
   font-variant-numeric: tabular-nums; text-shadow: var(--tshadow);
 }
 
+/* 周期切换（日 / 周 / 月） */
+.seg {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px; border-radius: 8px;
+  background: rgba(0, 0, 0, .22);
+  box-shadow: inset 0 0 0 .5px var(--edge-soft);
+  -webkit-user-select: none; user-select: none;
+}
+.seg-btn {
+  border: none; background: transparent; cursor: pointer;
+  font-size: 11px; font-weight: 600; line-height: 1;
+  color: var(--ink-3);
+  padding: 3px 9px; border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+  transition: background .14s ease, color .14s ease;
+}
+.seg-btn:hover { color: var(--ink); }
+.seg-btn.active {
+  background: rgba(95, 173, 255, .30); color: #DCECFF;
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .18);
+}
+
 .list {
   position: relative; z-index: 1;
   flex: 1 1 auto; overflow-y: auto;

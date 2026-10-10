@@ -4,7 +4,7 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-一个贴在桌面右侧的小卡片：**上半区滚动国内外最新 AI 资讯，下半区常驻 GitHub 一周最火项目 Top 10**。
+一个贴在桌面右侧的小卡片：**上半区滚动国内外最新 AI 资讯，下半区常驻 GitHub 热门项目 Top 10（日 / 周 / 月 可一键切换）**。
 透明深色面板、可拖动、不占任务栏，双击 `run.bat` 即可运行。
 
 ![截图](screenshot.png)
@@ -44,7 +44,7 @@ Quick start: `git clone` → double-click `run.bat` (it creates its own venv and
 │ ├ OpenAI   Introducing…        1小时前 │     点击展开看正文
 │ └ The Verge  Anthropic…        2小时前 │
 ├──────────────────────────────────┤
-│ GitHub 一周最火        Top 10        │  ← 固定高度，内部滚动
+│ GitHub 热门 [日|周|月]  Top 10        │  ← 固定高度，内部滚动
 │ 1 boykopovar/AnyPS5   ★16.3k +10243/周│     点击直达浏览器
 │ 2 mvschwarz/openrig   ★6.2k  +2693/周 │
 │ …                                   │
@@ -61,7 +61,7 @@ Quick start: `git clone` → double-click `run.bat` (it creates its own venv and
 | 1 小时自动刷新 | 后台线程每 3600s 抓一次，状态栏显示倒计时 |
 | 手动刷新 | 右上角 ⟳ 按钮，抓取时图标旋转 |
 | 点击新闻看具体内容 | 点击条目就地展开：RSS 摘要够长就直接显示，太短则自动联网读取原文正文 |
-| 下面模块 GitHub 一周最火 10 个 | 抓官方 `github.com/trending?since=weekly`，含项目名、简介、语言、总星数、**本周新增星数**；简介自动翻译成中文（英文原文保留在鼠标悬停提示里）；点击用默认浏览器打开 |
+| 下面模块 GitHub 热门 10 个（日/周/月可切换） | 抓官方 `github.com/trending?since=daily/weekly/monthly`，含项目名、简介、语言、总星数、**该周期新增星数**；右上角可在「日 / 周 / 月」间一键切换，切换只重抓仓库、不动资讯；简介自动翻译成中文（英文原文保留在鼠标悬停提示里）；点击用默认浏览器打开 |
 
 ## 中文化
 

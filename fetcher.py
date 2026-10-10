@@ -1,8 +1,8 @@
-"""数据抓取：AI 资讯 RSS + GitHub 一周热门仓库。
+"""数据抓取：AI 资讯 RSS + GitHub 热门仓库（日/周/月可选）。
 
 设计原则：
 1. 所有网络请求都带超时 + 异常兜底，任何单个源头失败都不影响整体。
-2. GitHub 趋势优先抓官方 trending 页面（真·一周最火），失败降级到 Search API。
+2. GitHub 趋势优先抓官方 trending 页面（真·日/周/月最火），失败降级到 Search API。
 3. 结果落盘缓存到 cache.json，冷启动时先读缓存保证秒开。
 """
 
@@ -183,8 +183,19 @@ def fetch_news(config: dict) -> list[dict]:
 
 
 # ----------------------------------------------------------------------------
-# GitHub 一周热门
+# GitHub 热门仓库（日 / 周 / 月 可选）
 # ----------------------------------------------------------------------------
+
+PERIODS = ("daily", "weekly", "monthly")
+PERIOD_LABEL = {"daily": "今日", "weekly": "本周", "monthly": "本月"}
+PERIOD_DAYS = {"daily": 1, "weekly": 7, "monthly": 30}
+# 趋势页对三种周期分别展示「stars today / this week / this month」，分别配对正则
+_DELTA_RE = {
+    "daily": re.compile(r"([\d,]+)\s*stars?\s+today", re.I),
+    "weekly": re.compile(r"([\d,]+)\s*stars?\s+this\s+week", re.I),
+    "monthly": re.compile(r"([\d,]+)\s*stars?\s+this\s+month", re.I),
+}
+
 
 def _int(text: str) -> int:
     try:
@@ -193,9 +204,10 @@ def _int(text: str) -> int:
         return 0
 
 
-def repos_from_trending_page() -> tuple[list[dict], str]:
-    """抓 github.com/trending?since=weekly，这是官方口径的一周最火。"""
-    url = "https://github.com/trending?since=weekly"
+def repos_from_trending_page(period: str = "weekly") -> tuple[list[dict], str]:
+    """抓 github.com/trending?since=<period>，官方口径的日/周/月最火。"""
+    since = period if period in PERIODS else "weekly"
+    url = f"https://github.com/trending?since={since}"
     resp = requests.get(url, headers=HEADERS, timeout=15)
     if resp.status_code != 200:
         raise RuntimeError(f"trending page status {resp.status_code}")
@@ -223,12 +235,11 @@ def repos_from_trending_page() -> tuple[list[dict], str]:
         stars_node = art.select_one("a[href$='/stargazers']")
         stars = _int(stars_node.get_text(strip=True)) if stars_node else 0
 
-        weekly = ""
-        for span in art.select("span.d-inline-block.float-sm-right"):
-            weekly = span.get_text(" ", strip=True)
-            break
-        weekly_match = re.search(r"([\d,]+)\s*stars?\s+this\s+week", weekly, re.I)
-        weekly_stars = _int(weekly_match.group(1)) if weekly_match else 0
+        delta = 0
+        span = art.select_one("span.d-inline-block.float-sm-right")
+        if span:
+            match = _DELTA_RE[since].search(span.get_text(" ", strip=True))
+            delta = _int(match.group(1)) if match else 0
 
         repos.append({
             "full_name": full_name,
@@ -236,17 +247,22 @@ def repos_from_trending_page() -> tuple[list[dict], str]:
             "desc": clip(desc, 110),
             "lang": lang,
             "stars": stars,
-            "delta": weekly_stars,
+            "delta": delta,
+            "delta_period": since,
         })
 
     if not repos:
         raise RuntimeError("trending parsed 0 repos")
-    return repos, "GitHub Trending (weekly)"
+    return repos, f"GitHub Trending ({PERIOD_LABEL.get(since, since)})"
 
 
-def repos_from_search_api() -> tuple[list[dict], str]:
-    """降级通道：近 7 天新建且星数最高的仓库。口径不同但同样客观可用。"""
-    since = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+def repos_from_search_api(period: str = "weekly") -> tuple[list[dict], str]:
+    """降级通道：近 N 天（日/周/月）新建且星数最高的仓库。
+
+    趋势页不可用时退而求其次，口径不同但同样客观可用。
+    """
+    days = PERIOD_DAYS.get(period, 7)
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
     url = "https://api.github.com/search/repositories"
     params = {"q": f"created:>{since}", "sort": "stars", "order": "desc", "per_page": MAX_REPOS}
     resp = requests.get(url, headers=HEADERS, params=params, timeout=15)
@@ -262,22 +278,34 @@ def repos_from_search_api() -> tuple[list[dict], str]:
             "lang": item.get("language") or "",
             "stars": item.get("stargazers_count", 0),
             "delta": 0,
+            "delta_period": period,
         })
     if not repos:
         raise RuntimeError("search api returned 0 repos")
-    return repos, "GitHub Search API (近 7 天新星)"
+    return repos, f"GitHub Search API (近{PERIOD_LABEL.get(period, period)}新星)"
 
 
-def fetch_repos() -> tuple[list[dict], str]:
+def fetch_repos(period: str = "weekly") -> tuple[list[dict], str]:
     for getter in (repos_from_trending_page, repos_from_search_api):
         try:
-            repos, label = getter()
+            repos, label = getter(period)
             repos = [r for r in repos if r.get("full_name") and r.get("url")]
             if repos:
                 return repos, label
         except Exception:
             continue
     return [], "暂时不可用"
+
+
+def fetch_repos_full(config: dict, period: str = "weekly") -> tuple[list[dict], str]:
+    """抓取 + 补中文描述，返回 (repos, source)。
+
+    整包刷新与单独切换周期共用，避免两套逻辑 drift。
+    """
+    repos, repo_source = fetch_repos(period)
+    if config.get("translate_desc", True):
+        repos = attach_translations(repos)
+    return repos, repo_source
 
 
 # ----------------------------------------------------------------------------
@@ -543,14 +571,15 @@ def write_cache(payload: dict) -> None:
         pass
 
 
-def collect() -> dict:
-    """一次性抓齐两部分数据，失败时自动回填缓存内容。"""
+def collect(period: str = "weekly") -> dict:
+    """一次性抓齐两部分数据，失败时自动回填缓存内容。
+
+    period 决定 GitHub 板块按「日 / 周 / 月」哪个周期拉取趋势榜。
+    """
     config = load_config()
     news = fetch_news(config)
-    repos, repo_source = fetch_repos()
+    repos, repo_source = fetch_repos_full(config, period)
 
-    if config.get("translate_desc", True):
-        attach_translations(repos)
     if config.get("translate_title", True):
         attach_news_translations(news)
 
@@ -565,6 +594,7 @@ def collect() -> dict:
         "news": news,
         "repos": repos,
         "repo_source": repo_source,
+        "repo_period": period,
         "updated_at": int(time.time()),
         "from_cache": not news and not repos,
     }

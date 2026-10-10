@@ -1,7 +1,7 @@
 """AI 雷达 — Windows 桌面小组件。
 
 上半区：国内外最新 AI 资讯（每 1 小时自动刷新，可手动刷新，点击展开详情）
-下半区：GitHub 一周最火项目 Top10（点击直达浏览器）
+下半区：GitHub 热门项目 Top10（日/周/月可切换，点击直达浏览器）
 
 运行方式：pythonw app.py 或双击 run.bat
 """
@@ -359,9 +359,13 @@ class Backend:
         self._articles = fetcher.load_article_cache()
         self._pending_articles = set()
         self._balloon_shown = False
+        cached = fetcher.read_cache()
+        period = cached.get("repo_period", "weekly")
+        self._repo_period = period if period in ("daily", "weekly", "monthly") else "weekly"
         with self._lock:
-            self._data = fetcher.read_cache()
-        logging.info("缓存载入，新闻 %s 条", len(self._data.get("news", [])))
+            self._data = cached
+        logging.info("缓存载入，新闻 %s 条 / GitHub 周期 %s",
+                     len(self._data.get("news", [])), self._repo_period)
         threading.Thread(target=self._auto_loop, daemon=True).start()
 
     # ---------- 给 JS 调用 ----------
@@ -380,6 +384,39 @@ class Backend:
         """手动刷新：立即返回，抓取在后台线程完成。"""
         self._start_fetch()
         return {"started": True}
+
+    def set_repo_period(self, period: str) -> dict:
+        """切换 GitHub 板块的周期（日/周/月），只重抓仓库，不动资讯。"""
+        if period not in ("daily", "weekly", "monthly"):
+            return {"ok": False, "error": "invalid period"}
+        if period == self._repo_period and self._data.get("repos"):
+            return {"ok": True, "period": period, "unchanged": True}
+        self._repo_period = period
+        self._start_fetch_repos()
+        return {"ok": True, "period": period}
+
+    def _start_fetch_repos(self) -> None:
+        """只重抓 GitHub 仓库（周期切换用），不触发资讯抓取与翻译。"""
+        threading.Thread(target=self._fetch_repos_worker, args=(self._repo_period,), daemon=True).start()
+
+    def _fetch_repos_worker(self, period: str) -> None:
+        try:
+            config = fetcher.load_config()
+            repos, repo_source = fetcher.fetch_repos_full(config, period)
+            with self._lock:
+                d = dict(self._data)
+                if repos:
+                    d["repos"] = repos
+                    d["repo_source"] = repo_source
+                d["repo_period"] = period
+                d["updated_at"] = int(time.time())
+                self._data = d
+                if repos:
+                    fetcher.write_cache(d)
+            logging.info("仓库刷新完成(period=%s): %s 个 / 来源 %s",
+                         period, len(repos), repo_source)
+        except Exception:  # noqa: BLE001
+            logging.error("仓库刷新失败: %s", traceback.format_exc())
 
     def open_url(self, url: str) -> dict:
         webbrowser.open_new_tab(url or "https://github.com")
@@ -462,7 +499,7 @@ class Backend:
 
     def _fetch_worker(self) -> None:
         try:
-            payload = fetcher.collect()
+            payload = fetcher.collect(self._repo_period)
             with self._lock:
                 self._data = payload
                 self._error = None

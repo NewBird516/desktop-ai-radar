@@ -9,6 +9,8 @@
   var lastStamp = 0;
   var lastRepoStamp = 0;
   var refreshing = false;
+  var currentPeriod = 'weekly';
+  var PERIOD_SUFFIX = { daily: '/日', weekly: '/周', monthly: '/月' };
   var REFRESH_INTERVAL = 3600; // 与后端保持一致，仅用于倒计时显示
 
   var el = {
@@ -16,6 +18,7 @@
     repoList: document.getElementById('repo-list'),
     newsMeta: document.getElementById('news-meta'),
     repoMeta: document.getElementById('repo-meta'),
+    repoSeg: document.getElementById('repo-seg'),
     stamp: document.getElementById('stamp'),
     status: document.getElementById('status-text'),
     countdown: document.getElementById('countdown'),
@@ -24,6 +27,14 @@
     btnClose: document.getElementById('btn-close'),
     titlebar: document.getElementById('titlebar')
   };
+
+  function setSegActive(p) {
+    if (!el.repoSeg) return;
+    var btns = el.repoSeg.querySelectorAll('.seg-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-period') === p);
+    }
+  }
 
   // ---------- 工具 ----------
   function esc(s) {
@@ -187,8 +198,9 @@
       return;
     }
     el.repoMeta.textContent = 'Top ' + repos.length;
+    var suffix = PERIOD_SUFFIX[currentPeriod] || '/周';
     el.repoList.innerHTML = repos.map(function (r, i) {
-      var week = r.delta ? '<span class="week">+' + fmtStar(r.delta) + '/周</span>' : '';
+      var week = r.delta ? '<span class="week">+' + fmtStar(r.delta) + suffix + '</span>' : '';
       var zh = r.desc_zh || '';
       var shown = zh || r.desc || '暂无描述';
       // 鼠标悬停时可看到英文原版简介，中译文看不顺时也有得对照
@@ -211,6 +223,11 @@
   function render(data) {
     var news = data.news || [];
     var repos = data.repos || [];
+
+    if (data.repo_period && data.repo_period !== currentPeriod) {
+      currentPeriod = data.repo_period;
+    }
+    setSegActive(currentPeriod);
 
     if (news.length || repos.length) {
       if (data.updated_at !== lastStamp) {
@@ -266,6 +283,18 @@
     el.btnMin.addEventListener('click', function () { api && api.hide_window && api.hide_window(); });
     el.btnClose.addEventListener('click', function () { api && api.hide_window && api.hide_window(); });
 
+    // 周期切换（日/周/月）：切换后只重抓 GitHub 仓库，不动资讯
+    el.repoSeg.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.seg-btn');
+      if (!btn || !api) return;
+      var p = btn.getAttribute('data-period');
+      if (p === currentPeriod) return;
+      setSegActive(p);
+      currentPeriod = p;
+      el.repoMeta.textContent = '加载中…';
+      api.set_repo_period(p);
+    });
+
     // 资讯列表：展开/收起 与 按钮动作
     el.newsList.addEventListener('click', function (ev) {
       var openBtn = ev.target.closest('[data-open]');
@@ -316,7 +345,7 @@
     var suppress = false;
 
     function isInteractive(target) {
-      return !!(target.closest && target.closest('.wbtn, .link-btn'));
+      return !!(target.closest && target.closest('.wbtn, .link-btn, .seg'));
     }
 
     // 落在原生滚动条上的按下要放行，否则滚不动列表
@@ -390,6 +419,7 @@
     observeLayout();
     bindCommon();
     bindDrag();
+    setSegActive(currentPeriod);
     pull();
     setInterval(tick, 2500);
   }
