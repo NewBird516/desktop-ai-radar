@@ -1,64 +1,77 @@
 @echo off
-chcp 65001 >nul
+setlocal
 cd /d "%~dp0"
 
-set REPO_URL=https://github.com/NewBird516/desktop-ai-radar.git
+set "REPO_URL=https://github.com/NewBird516/desktop-ai-radar.git"
 
 echo ==========================================================
-echo   AI 雷达 - 推送到 GitHub
-echo   仓库地址: %REPO_URL%
+echo   AI Radar - push to GitHub
+echo   Repo: %REPO_URL%
 echo ==========================================================
 echo.
-echo   开始前请确认已做好这一件事：
-echo   打开 https://github.com/new 创建仓库
-echo     - Repository name: desktop-ai-radar
-echo     - Public（公开）
-echo     - 不要勾选 Add a README file / .gitignore / License
-echo       （本地已经有了，勾了会冲突）
+echo   Before we start, make sure you have created an EMPTY repo:
+echo     1. Open https://github.com/new
+echo     2. Repository name: desktop-ai-radar
+echo     3. Visibility: Public
+echo     4. Do NOT add README / .gitignore / license
+echo        (they already exist locally, adding them will conflict)
 echo.
 pause
 
-where git >nul 2>nul
-if errorlevel 1 (
-    echo [X] 没找到 git，请先安装 https://git-scm.com
+rem ---- locate git.exe ----
+set "GITEXE="
+git --version >nul 2>nul
+if not errorlevel 1 set "GITEXE=git"
+if not defined GITEXE if exist "%ProgramFiles%\Git\bin\git.exe" set "GITEXE=%ProgramFiles%\Git\bin\git.exe"
+if not defined GITEXE if exist "%ProgramFiles(x86)%\Git\bin\git.exe" set "GITEXE=%ProgramFiles(x86)%\Git\bin\git.exe"
+if not defined GITEXE if exist "%LocalAppData%\Programs\Git\bin\git.exe" set "GITEXE=%LocalAppData%\Programs\Git\bin\git.exe"
+
+if not defined GITEXE (
+    echo [X] git not found. Please install Git for Windows first:
+    echo     https://git-scm.com/download/win
     pause
     exit /b 1
 )
 
-git rev-parse --git-dir >nul 2>nul
+echo Using git: "%GITEXE%"
+"%GITEXE%" --version
+
+"%GITEXE%" rev-parse --git-dir >nul 2>nul
 if errorlevel 1 (
-    echo [X] 当前目录还不是 git 仓库。
+    echo [X] This folder is not a git repository yet.
     pause
     exit /b 1
 )
 
-git remote get-url origin >nul 2>nul
+"%GITEXE%" remote get-url origin >nul 2>nul
 if errorlevel 1 (
-    git remote add origin %REPO_URL%
+    "%GITEXE%" remote add origin %REPO_URL%
 ) else (
-    git remote set-url origin %REPO_URL%
+    "%GITEXE%" remote set-url origin %REPO_URL%
 )
 
-git branch -M main
-git push -u origin main
+"%GITEXE%" branch -M main
+"%GITEXE%" push -u origin main
 
 if errorlevel 1 (
     echo.
-    echo [X] 推送失败，常见原因：
-    echo   1. 网页上的空仓库还没创建
-    echo   2. 还没登录 GitHub —— 在弹出的窗口里登录即可
-    echo   3. 需要代理 —— 先执行：git config --global http.proxy http://127.0.0.1:端口
-    echo   4. 也可以改用 GitHub Desktop 打开本文件夹推送
+    echo [X] Push failed. Common causes:
+    echo   1. The empty repo on github.com is not created yet
+    echo   2. Not logged in - sign in when the login popup appears
+    echo   3. Network needs a proxy - run:
+    echo      git config --global http.proxy http://127.0.0.1:PORT
+    echo   4. Or use GitHub Desktop to push this folder instead
     pause
     exit /b 1
 )
 
 echo.
-echo [OK] 推送成功！
+echo [OK] Pushed successfully!
 echo      https://github.com/NewBird516/desktop-ai-radar
 echo.
-echo 建议顺手做的两件事：
-echo   1. 仓库页 About 齿轮里加 topics: ai  news  rss  desktop-widget  python  pywebview  windows
-echo   2. Releases - Create a new release - Tag: v1.0.0 发第一个版本
+echo Recommended next steps:
+echo   1. Repo page - About gear icon - add topics:
+echo      ai, news, rss, desktop-widget, python, pywebview, windows
+echo   2. Releases - Draft a new release - tag: v1.0.0
 echo.
 pause
